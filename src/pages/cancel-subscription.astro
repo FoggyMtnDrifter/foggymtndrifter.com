@@ -1,0 +1,14 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import Layout from '@/components/Layout.astro'
+import { CancelSubscriptionForm } from '@/components/CancelSubscriptionForm'
+---
+
+<BaseLayout 
+  title="Cancel Tip - FoggyMtnDrifter"
+  description="Cancel your monthly recurring tip subscription. Enter your email address to cancel your subscription."
+>
+  <Layout>
+    <CancelSubscriptionForm client:load />
+  </Layout>
+</BaseLayout> 
