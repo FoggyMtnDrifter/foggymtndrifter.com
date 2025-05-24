@@ -26,12 +26,14 @@ interface ArticleLayoutProps {
   article: ArticleData;
   children: React.ReactNode;
   showBackButton?: boolean;
+  slug?: string;
 }
 
 export function ArticleLayout({
   article,
   children,
   showBackButton = true,
+  slug,
 }: ArticleLayoutProps) {
   const handleGoBack = () => {
     if (typeof window !== "undefined") {
@@ -55,7 +57,14 @@ export function ArticleLayout({
           )}
           <article>
             <header className="flex flex-col">
-              <h1 className="mt-6 text-4xl font-bold tracking-tight text-zinc-800 sm:text-5xl dark:text-zinc-100">
+              <h1
+                className="mt-6 text-4xl font-bold tracking-tight text-zinc-800 sm:text-5xl dark:text-zinc-100"
+                style={
+                  slug
+                    ? { viewTransitionName: `article-title-${slug}` }
+                    : undefined
+                }
+              >
                 {article.title}
               </h1>
               <time

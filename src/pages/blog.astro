@@ -28,7 +28,12 @@ const articles = allPosts
           {articles.map((article) => (
             <article class="md:grid md:grid-cols-4 md:items-baseline">
               <Card className="md:col-span-3" client:load>
-                <Card.Title href={`/blog/${article.id.replace('.md', '')}`}>{article.data.title}</Card.Title>
+                <Card.Title 
+                  href={`/blog/${article.id.replace('.md', '')}`}
+                  transitionName={`article-title-${article.id.replace('.md', '')}`}
+                >
+                  {article.data.title}
+                </Card.Title>
                 <Card.Eyebrow
                   as="time"
                   dateTime={article.data.pubDate.toISOString()}

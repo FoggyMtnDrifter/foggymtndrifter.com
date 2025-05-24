@@ -74,14 +74,21 @@ Card.Title = function CardTitle<T extends React.ElementType = "h2">({
   as,
   href,
   children,
+  transitionName,
 }: Omit<React.ComponentPropsWithoutRef<T>, "as" | "href"> & {
   as?: T;
   href?: string;
+  transitionName?: string;
 }) {
   let Component = as ?? "h2";
 
   return (
-    <Component className="text-base font-semibold tracking-tight text-zinc-800 dark:text-zinc-100">
+    <Component
+      className="text-base font-semibold tracking-tight text-zinc-800 dark:text-zinc-100"
+      style={
+        transitionName ? { viewTransitionName: transitionName } : undefined
+      }
+    >
       {href ? <Card.Link href={href}>{children}</Card.Link> : children}
     </Component>
   );

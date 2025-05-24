@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { ClientRouter, fade } from "astro:transitions";
 
 export interface Props {
   title?: string;
@@ -84,8 +85,11 @@ const pageTitle = title === "Michael Kinder - Linux Wrangler. Mountain Drifter."
       data-site-id={import.meta.env.DEV ? "3" : "4"}
       defer
     ></script>
+    
+    <!-- View Transitions -->
+    <ClientRouter />
   </head>
-  <body class="flex h-full bg-zinc-50 dark:bg-black">
+  <body class="flex h-full bg-zinc-50 dark:bg-black" transition:animate={fade({ duration: '0.2s' })}>
     <slot />
   </body>
 </html>
