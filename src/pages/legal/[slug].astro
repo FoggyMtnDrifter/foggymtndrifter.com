@@ -1,0 +1,40 @@
+---
+import { getEntry, render, getCollection, type CollectionEntry } from 'astro:content'
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import Layout from '@/components/Layout.astro'
+import { LegalLayout } from '@/components/LegalLayout'
+
+export async function getStaticPaths() {
+  const legalDocs: CollectionEntry<"legal">[] = await getCollection("legal")
+  return legalDocs.map((doc) => ({
+    params: { slug: doc.id.replace('.md', '') },
+    props: { doc },
+  }))
+}
+
+// Get the slug from the incoming server request
+const { slug } = Astro.params
+const { doc } = Astro.props
+
+// Query for the entry directly using the request slug
+const entry: CollectionEntry<"legal"> = doc || await getEntry("legal", slug)
+
+// Redirect if the entry does not exist
+if (entry === undefined) {
+  return Astro.redirect("/404")
+}
+
+// Render the entry to HTML in the template
+const { Content } = await render(entry)
+---
+
+<BaseLayout 
+  title={entry.data.title}
+  description={`Legal document: ${entry.data.title}`}
+>
+  <Layout>
+    <LegalLayout legalDoc={entry.data} client:load>
+      <Content />
+    </LegalLayout>
+  </Layout>
+</BaseLayout> 

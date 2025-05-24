@@ -1,0 +1,92 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: string;
+}
+
+const {
+  title = "Michael Kinder - Linux Wrangler. Mountain Drifter.",
+  description = "I'm a mountain-dwelling Linux specialist who solves server puzzles by day and contributes to open source by night. When I'm not taming command lines at hosting.com or leading design for Rocky Linux, you'll find me exploring the Appalachian trails or coding up solutions to make mountain life a little more automated. Welcome to my digital cabin — grab some coffee and stay awhile.",
+  image = "/social-image.jpg",
+  type = "website"
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const socialImageURL = new URL(image, Astro.url).href;
+
+// Handle title template
+const pageTitle = title === "Michael Kinder - Linux Wrangler. Mountain Drifter." 
+  ? title 
+  : `${title} - Michael Kinder`;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="h-full antialiased">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    
+    <!-- Primary Meta Tags -->
+    <title>{pageTitle}</title>
+    <meta name="title" content={pageTitle} />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    
+    <!-- RSS Feed -->
+    <link rel="alternate" type="application/rss+xml" title={pageTitle} href={`${Astro.site}feed.xml`} />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={socialImageURL} />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={pageTitle} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={socialImageURL} />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Covered+By+Your+Grace&display=swap" rel="stylesheet">
+    
+    <!-- Global Styles -->
+    <link rel="stylesheet" href="/src/styles/global.css" />
+    
+    <!-- Theme Script - Prevents FOUC -->
+    <script is:inline>
+      // Apply theme immediately to prevent flash
+      (function() {
+        const getSystemTheme = () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        const effectiveTheme = savedTheme === 'system' ? getSystemTheme() : savedTheme;
+        
+        if (effectiveTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
+    
+    <!-- Analytics Script -->
+    <script 
+      src="https://a.fmd.gg/api/script.js"
+      data-site-id={import.meta.env.DEV ? "3" : "4"}
+      defer
+    ></script>
+  </head>
+  <body class="flex h-full bg-zinc-50 dark:bg-black">
+    <slot />
+  </body>
+</html>
