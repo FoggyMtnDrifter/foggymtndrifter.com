@@ -1,4 +1,5 @@
 import he from "he";
+import { cache } from "./cache";
 
 export interface FormattedPost {
   id: number;
@@ -79,6 +80,13 @@ function cleanAndTruncate(text: string, _maxLength: number = 200): string {
 }
 
 export async function getWordPressPosts(): Promise<FormattedPost[]> {
+  const cacheKey = "wordpress_posts";
+  const cachedPosts = cache.get<FormattedPost[]>(cacheKey);
+
+  if (cachedPosts) {
+    return cachedPosts;
+  }
+
   try {
     const categoryId = await getBlogCategoryId();
     const response = await fetch(
@@ -93,7 +101,7 @@ export async function getWordPressPosts(): Promise<FormattedPost[]> {
 
     const posts: WordPressPost[] = await response.json();
 
-    return posts.map((post) => ({
+    const formattedPosts = posts.map((post) => ({
       id: post.id,
       title: decodeHtmlEntities(post.title.rendered),
       slug: post.slug,
@@ -103,6 +111,9 @@ export async function getWordPressPosts(): Promise<FormattedPost[]> {
       description: decodeHtmlEntities(post.excerpt.rendered),
       imageUrl: post._embedded?.["wp:featuredmedia"]?.[0]?.source_url,
     }));
+
+    cache.set(cacheKey, formattedPosts);
+    return formattedPosts;
   } catch (error) {
     throw new Error(
       "Unable to connect to the blog server. Please try again later."
@@ -111,6 +122,13 @@ export async function getWordPressPosts(): Promise<FormattedPost[]> {
 }
 
 export async function getLegalPosts(): Promise<FormattedPost[]> {
+  const cacheKey = "legal_posts";
+  const cachedPosts = cache.get<FormattedPost[]>(cacheKey);
+
+  if (cachedPosts) {
+    return cachedPosts;
+  }
+
   try {
     const categoryId = await getLegalCategoryId();
     const response = await fetch(
@@ -125,7 +143,7 @@ export async function getLegalPosts(): Promise<FormattedPost[]> {
 
     const posts: WordPressPost[] = await response.json();
 
-    return posts.map((post) => ({
+    const formattedPosts = posts.map((post) => ({
       id: post.id,
       title: post.title.rendered,
       slug: post.slug,
@@ -135,6 +153,9 @@ export async function getLegalPosts(): Promise<FormattedPost[]> {
       description: post.excerpt.rendered,
       imageUrl: post._embedded?.["wp:featuredmedia"]?.[0]?.source_url,
     }));
+
+    cache.set(cacheKey, formattedPosts);
+    return formattedPosts;
   } catch (error) {
     throw new Error(
       "Unable to connect to the blog server. Please try again later."
@@ -145,6 +166,13 @@ export async function getLegalPosts(): Promise<FormattedPost[]> {
 export async function getWordPressPost(
   slug: string
 ): Promise<FormattedPost | null> {
+  const cacheKey = `wordpress_post_${slug}`;
+  const cachedPost = cache.get<FormattedPost>(cacheKey);
+
+  if (cachedPost) {
+    return cachedPost;
+  }
+
   try {
     const response = await fetch(
       `${WORDPRESS_API_URL}/posts?slug=${slug}&_embed`
@@ -163,7 +191,7 @@ export async function getWordPressPost(
     }
 
     const post = posts[0];
-    return {
+    const formattedPost = {
       id: post.id,
       title: decodeHtmlEntities(post.title.rendered),
       slug: post.slug,
@@ -173,6 +201,9 @@ export async function getWordPressPost(
       description: decodeHtmlEntities(post.excerpt.rendered),
       imageUrl: post._embedded?.["wp:featuredmedia"]?.[0]?.source_url,
     };
+
+    cache.set(cacheKey, formattedPost);
+    return formattedPost;
   } catch (error) {
     throw new Error(
       "Unable to connect to the blog server. Please try again later."
