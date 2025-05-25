@@ -27,6 +27,7 @@ interface ArticleLayoutProps {
   children: React.ReactNode;
   showBackButton?: boolean;
   slug?: string;
+  isLegal?: boolean;
 }
 
 export function ArticleLayout({
@@ -34,6 +35,7 @@ export function ArticleLayout({
   children,
   showBackButton = true,
   slug,
+  isLegal = false,
 }: ArticleLayoutProps) {
   const handleGoBack = () => {
     if (typeof window !== "undefined") {
@@ -73,6 +75,7 @@ export function ArticleLayout({
               >
                 <span className="h-4 w-0.5 rounded-full bg-zinc-200 dark:bg-zinc-500" />
                 <span className="ml-3">
+                  {isLegal ? "Last Updated: " : ""}
                   {formatDate(article.pubDate.toISOString())}
                 </span>
               </time>
@@ -80,19 +83,21 @@ export function ArticleLayout({
             <Prose className="mt-8" data-mdx-content>
               {children}
             </Prose>
-            <div className="mt-16">
-              <div className="rounded-2xl border border-violet-600/20 bg-violet-50/10 p-6 dark:border-violet-400/20 dark:bg-violet-400/5">
-                <h2 className="text-md flex items-center font-semibold text-zinc-900 dark:text-zinc-100">
-                  <span>Like this content?</span>
-                </h2>
-                <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  Send me a tip to support more articles like this one.
-                </p>
-                <div className="mt-6">
-                  <TipButton />
+            {!isLegal && (
+              <div className="mt-16">
+                <div className="rounded-2xl border border-violet-600/20 bg-violet-50/10 p-6 dark:border-violet-400/20 dark:bg-violet-400/5">
+                  <h2 className="text-md flex items-center font-semibold text-zinc-900 dark:text-zinc-100">
+                    <span>Like this content?</span>
+                  </h2>
+                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    Send me a tip to support more articles like this one.
+                  </p>
+                  <div className="mt-6">
+                    <TipButton />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </article>
         </div>
       </div>

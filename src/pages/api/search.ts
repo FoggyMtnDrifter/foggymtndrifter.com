@@ -1,7 +1,8 @@
 import type { APIRoute } from "astro";
-import { getCollection } from "astro:content";
+import { getWordPressPosts } from "@/lib/wordpress";
 import { projects } from "@/data/projects";
 import type { CollectionEntry } from "astro:content";
+import he from "he";
 
 export const prerender = false;
 
@@ -23,25 +24,16 @@ interface Article {
 }
 
 interface SearchResult {
-  type: "blog" | "project";
+  type: string;
   title: string;
   description: string;
   url: string;
-  date?: string;
+  date: string;
 }
 
-// Get blog posts from the content collection
-async function getAllArticles(): Promise<Article[]> {
-  const posts: CollectionEntry<"blog">[] = await getCollection("blog");
-  return posts
-    .filter((post) => !post.data.draft)
-    .map((post) => ({
-      title: post.data.title,
-      description: post.data.description,
-      slug: post.id,
-      date: post.data.pubDate.toISOString(),
-      content: post.body, // Include the markdown content for search
-    }));
+// Get blog posts from WordPress
+async function getAllArticles() {
+  return await getWordPressPosts();
 }
 
 function calculateRelevance(
@@ -76,6 +68,14 @@ function calculateRelevance(
   return score;
 }
 
+// Function to strip HTML tags and decode entities
+function cleanText(text: string): string {
+  // First decode HTML entities
+  const decoded = he.decode(text);
+  // Then strip HTML tags
+  return decoded.replace(/<[^>]*>/g, "");
+}
+
 export const GET: APIRoute = async ({ url }) => {
   const query = url.searchParams.get("q")?.toLowerCase() || "";
   const filter = url.searchParams.get("filter") || "all";
@@ -96,29 +96,24 @@ export const GET: APIRoute = async ({ url }) => {
   try {
     // Search blog posts
     if (filter === "all" || filter === "blog") {
-      const posts = await getCollection("blog");
+      const posts = await getAllArticles();
       console.log(`Found ${posts.length} blog posts to search through`);
 
       for (const post of posts) {
-        if (post.data.draft) {
-          console.log(`Skipping draft post: ${post.data.title}`);
-          continue;
-        }
-
-        // Search in frontmatter first (faster)
-        const frontmatterText = `
-          ${post.data.title}
-          ${post.data.description}
+        // Search in title and description
+        const searchText = `
+          ${post.title}
+          ${post.description}
         `.toLowerCase();
 
-        if (frontmatterText.includes(query)) {
-          console.log(`Match found in frontmatter of post: ${post.data.title}`);
+        if (searchText.includes(query)) {
+          console.log(`Match found in post: ${post.title}`);
           results.push({
             type: "blog",
-            title: post.data.title,
-            description: post.data.description,
-            url: `/blog/${post.id.replace(".md", "")}`,
-            date: post.data.pubDate.toLocaleDateString("en-US", {
+            title: he.decode(post.title),
+            description: cleanText(post.description),
+            url: `/blog/${post.slug}`,
+            date: post.pubDate.toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
               day: "numeric",
@@ -127,29 +122,20 @@ export const GET: APIRoute = async ({ url }) => {
           continue;
         }
 
-        // If no match in frontmatter, search in content
-        try {
-          const searchableText = post.body?.toLowerCase() || "";
-
-          if (searchableText.includes(query)) {
-            console.log(`Match found in content of post: ${post.data.title}`);
-            results.push({
-              type: "blog",
-              title: post.data.title,
-              description: post.data.description,
-              url: `/blog/${post.id.replace(".md", "")}`,
-              date: post.data.pubDate.toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              }),
-            });
-          }
-        } catch (error) {
-          console.error(
-            `Error rendering content for post ${post.data.title}:`,
-            error
-          );
+        // Search in content if no match in title/description
+        if (post.content.toLowerCase().includes(query)) {
+          console.log(`Match found in content of post: ${post.title}`);
+          results.push({
+            type: "blog",
+            title: he.decode(post.title),
+            description: cleanText(post.description),
+            url: `/blog/${post.slug}`,
+            date: post.pubDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+          });
         }
       }
     }
@@ -171,6 +157,7 @@ export const GET: APIRoute = async ({ url }) => {
             title: project.name,
             description: project.description,
             url: project.link.href,
+            date: project.link.label,
           });
         }
       }
@@ -207,15 +194,12 @@ export const GET: APIRoute = async ({ url }) => {
       },
     });
   } catch (error) {
-    console.error("Search error:", error);
-    return new Response(
-      JSON.stringify({ error: "An error occurred while searching" }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    console.error("Error searching:", error);
+    return new Response(JSON.stringify({ error: "Search failed" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   }
 };

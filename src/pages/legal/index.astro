@@ -1,0 +1,23 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro'
+import Layout from '@/components/Layout.astro'
+import { SimpleLayout } from '@/components/SimpleLayout'
+import { LegalPosts } from '@/components/LegalPosts'
+---
+
+<BaseLayout 
+  title="Legal Documents"
+  description="Legal documents and policies for FoggyMtnDrifter.com"
+>
+  <Layout>
+    <SimpleLayout
+      title="Legal Documents"
+      intro="Important legal documents and policies that govern the use of this website. Please review these documents carefully."
+      client:load
+    >
+      <div id="legal-posts-container">
+        <LegalPosts client:load />
+      </div>
+    </SimpleLayout>
+  </Layout>
+</BaseLayout> 

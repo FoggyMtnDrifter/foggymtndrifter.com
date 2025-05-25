@@ -1,16 +1,8 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro'
 import Layout from '@/components/Layout.astro'
-import { Card } from '@/components/Card'
 import { SimpleLayout } from '@/components/SimpleLayout'
-import { formatDate } from '@/lib/formatDate'
-import { getCollection, type CollectionEntry } from 'astro:content'
-
-// Get all blog posts and sort by date (newest first)
-const allPosts: CollectionEntry<'blog'>[] = await getCollection('blog')
-const articles = allPosts
-  .filter(post => !post.data.draft)
-  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
+import { BlogPosts } from '@/components/BlogPosts'
 ---
 
 <BaseLayout 
@@ -23,39 +15,8 @@ const articles = allPosts
       intro="Welcome to my digital journal where I document my adventures through Linux landscapes, open source communities, and tech explorations. Grab a virtual cup of coffee and join me around the campfire as we talk code, design, and life in the mountains."
       client:load
     >
-      <div class="md:border-l md:border-zinc-100 md:pl-6 md:dark:border-zinc-700/40">
-        <div class="flex max-w-3xl flex-col space-y-16">
-          {articles.map((article) => (
-            <article class="md:grid md:grid-cols-4 md:items-baseline">
-              <Card className="md:col-span-3" client:load>
-                <Card.Title 
-                  href={`/blog/${article.id.replace('.md', '')}`}
-                  transitionName={`article-title-${article.id.replace('.md', '')}`}
-                >
-                  {article.data.title}
-                </Card.Title>
-                <Card.Eyebrow
-                  as="time"
-                  dateTime={article.data.pubDate.toISOString()}
-                  className="md:hidden"
-                  decorate
-                >
-                  {formatDate(article.data.pubDate.toISOString())}
-                </Card.Eyebrow>
-                <Card.Description>{article.data.description}</Card.Description>
-                <Card.Cta>Read article</Card.Cta>
-              </Card>
-              <Card.Eyebrow
-                as="time"
-                dateTime={article.data.pubDate.toISOString()}
-                className="mt-1 max-md:hidden"
-                client:load
-              >
-                {formatDate(article.data.pubDate.toISOString())}
-              </Card.Eyebrow>
-            </article>
-          ))}
-        </div>
+      <div id="blog-posts-container">
+        <BlogPosts client:load />
       </div>
     </SimpleLayout>
   </Layout>
