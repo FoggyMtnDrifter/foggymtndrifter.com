@@ -1,6 +1,8 @@
 import type { APIRoute } from "astro";
 import { EmbyService } from "../../lib/server/emby";
 
+export const prerender = false;
+
 export const GET: APIRoute = async () => {
   try {
     const embyService = new EmbyService();
