@@ -1,11 +1,13 @@
 import type { APIRoute } from "astro";
 import { EmbyService } from "../../lib/server/emby";
+import { TMDBService } from "../../lib/server/tmdb";
 
 export const prerender = false;
 
 export const GET: APIRoute = async () => {
   try {
     const embyService = new EmbyService();
+    const tmdbService = new TMDBService();
     const session = await embyService.getCurrentSession();
 
     // Don't return any data if it's live TV or if the content is paused
@@ -45,32 +47,20 @@ export const GET: APIRoute = async () => {
               productionYear: session.NowPlayingItem.ProductionYear,
               seasonNumber: session.NowPlayingItem.ParentIndexNumber,
               episodeNumber: session.NowPlayingItem.IndexNumber,
-              imageUrl:
-                session.NowPlayingItem.Type === "Episode" &&
-                session.NowPlayingItem.SeriesName
-                  ? await embyService.getSeriesImageUrl(
-                      session.NowPlayingItem.SeriesId || "",
-                      session.NowPlayingItem.SeriesName
-                    )
-                  : session.NowPlayingItem.ImageTags?.Primary
-                  ? embyService.getImageUrl(
-                      session.NowPlayingItem.Id,
-                      session.NowPlayingItem.ImageTags.Primary
-                    )
-                  : null,
-              backdropUrl:
-                session.NowPlayingItem.Type === "Episode" &&
-                session.NowPlayingItem.ParentBackdropImageTags?.[0]
-                  ? embyService.getBackdropUrl(
-                      session.NowPlayingItem.ParentBackdropItemId || "",
-                      session.NowPlayingItem.ParentBackdropImageTags[0]
-                    )
-                  : session.NowPlayingItem.BackdropImageTags?.[0]
-                  ? embyService.getBackdropUrl(
-                      session.NowPlayingItem.Id,
-                      session.NowPlayingItem.BackdropImageTags[0]
-                    )
-                  : null,
+              imageUrl: await tmdbService.getPosterUrl(
+                session.NowPlayingItem.Type === "Episode"
+                  ? session.NowPlayingItem.SeriesName || ""
+                  : session.NowPlayingItem.Name,
+                session.NowPlayingItem.Type,
+                session.NowPlayingItem.ProductionYear
+              ),
+              backdropUrl: await tmdbService.getBackdropUrl(
+                session.NowPlayingItem.Type === "Episode"
+                  ? session.NowPlayingItem.SeriesName || ""
+                  : session.NowPlayingItem.Name,
+                session.NowPlayingItem.Type,
+                session.NowPlayingItem.ProductionYear
+              ),
             }
           : null,
         playState: null,
