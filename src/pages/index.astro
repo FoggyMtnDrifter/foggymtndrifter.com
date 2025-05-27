@@ -6,6 +6,7 @@ import { TipButton } from '@/components/TipButton'
 import { AnalyticsLink } from '@/components/AnalyticsLink'
 import { BlueskyIcon, GitHubIcon, LinkedInIcon } from '@/components/SocialIcons'
 import { BlogPosts } from '@/components/BlogPosts'
+import NowPlaying from '@/components/NowPlaying'
 
 // Resume data
 const resume = [
@@ -183,6 +184,60 @@ const rotations = ['rotate-2', '-rotate-2', 'rotate-2', 'rotate-2', '-rotate-2']
               </svg>
             </AnalyticsLink>
           </div>
+
+          <!-- Now Playing - Client-side rendered -->
+          <div id="now-playing-container" class="hidden">
+            <div class="rounded-2xl border border-zinc-100 p-6 dark:border-zinc-700/40">
+              <h2 class="flex text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                  class="h-6 w-6 flex-none"
+                >
+                  <path
+                    d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"
+                    class="fill-zinc-100 stroke-zinc-400 dark:fill-zinc-100/10 dark:stroke-zinc-500"
+                  />
+                  <path
+                    d="M8 20h8"
+                    class="stroke-zinc-400 dark:stroke-zinc-500"
+                  />
+                  <path
+                    d="M12 20v-2"
+                    class="stroke-zinc-400 dark:stroke-zinc-500"
+                  />
+                </svg>
+                <span class="ml-3">Now Playing</span>
+              </h2>
+              <div class="mt-6">
+                <NowPlaying client:load />
+              </div>
+            </div>
+          </div>
+
+          <script>
+            // Show the Now Playing container only when there's active playback
+            const checkNowPlaying = async () => {
+              try {
+                const response = await fetch('/api/now-playing');
+                const data = await response.json();
+                const container = document.getElementById('now-playing-container');
+                if (container) {
+                  container.style.display = data.playing ? 'block' : 'none';
+                }
+              } catch (error) {
+                console.error('Error checking now playing status:', error);
+              }
+            };
+
+            // Check initially and every 10 seconds
+            checkNowPlaying();
+            setInterval(checkNowPlaying, 10000);
+          </script>
         </div>
       </div>
     </Container>
