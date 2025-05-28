@@ -11,6 +11,7 @@ interface NowPlayingItem {
   episodeNumber?: number;
   imageUrl: string | null;
   backdropUrl: string | null;
+  channelName?: string;
 }
 
 interface NowPlayingData {
@@ -22,14 +23,19 @@ export default function NowPlaying() {
   const [data, setData] = useState<NowPlayingData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
 
   useEffect(() => {
     const fetchNowPlaying = async () => {
+      // Only fetch if we haven't fetched before
+      if (hasFetched) return;
+
       try {
         setIsLoading(true);
         const response = await fetch("/api/now-playing");
         const data = await response.json();
         setData(data);
+        setHasFetched(true);
       } catch (err) {
         setError("Failed to fetch now playing status");
       } finally {
@@ -38,7 +44,7 @@ export default function NowPlaying() {
     };
 
     fetchNowPlaying();
-  }, []);
+  }, [hasFetched]);
 
   if (error) {
     return null;
@@ -58,11 +64,36 @@ export default function NowPlaying() {
     );
   }
 
-  if (!data?.playing || !data.item || data.item.type === "TvChannel") {
+  if (!data?.playing || !data.item) {
     return null;
   }
 
   const { item } = data;
+
+  // Format the display text based on content type
+  const getDisplayText = () => {
+    if (item.type === "TvChannel") {
+      return null;
+    }
+
+    if (item.type === "Episode" && item.seriesName) {
+      const parts = [
+        item.seasonNumber && item.episodeNumber
+          ? `S${item.seasonNumber
+              .toString()
+              .padStart(2, "0")}E${item.episodeNumber
+              .toString()
+              .padStart(2, "0")}`
+          : null,
+        item.episodeTitle,
+      ].filter(Boolean);
+
+      return parts.join(" • ");
+    }
+
+    // For movies or other content
+    return item.productionYear ? item.productionYear.toString() : null;
+  };
 
   return (
     <div className="relative overflow-hidden rounded-lg border border-zinc-300 bg-zinc-50 p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
@@ -91,21 +122,9 @@ export default function NowPlaying() {
               <h3 className="font-medium text-zinc-900 dark:text-zinc-100">
                 {item.seriesName || item.name}
               </h3>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                {item.type === "Episode" ? (
-                  <>
-                    {item.seasonNumber &&
-                      item.episodeNumber &&
-                      `S${item.seasonNumber} E${item.episodeNumber}`}
-                    {item.productionYear && ` • ${item.productionYear}`}
-                  </>
-                ) : (
-                  item.productionYear
-                )}
-              </p>
-              {item.type === "Episode" && item.episodeTitle && (
+              {getDisplayText() && (
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {item.episodeTitle}
+                  {getDisplayText()}
                 </p>
               )}
             </div>

@@ -19,6 +19,17 @@ const embySessionSchema = z
         ParentBackdropImageTags: z.array(z.string()).optional(),
         IndexNumber: z.number().optional(),
         ParentIndexNumber: z.number().optional(),
+        ChannelName: z.string().optional(),
+        CurrentProgram: z
+          .object({
+            Name: z.string(),
+            StartDate: z.string(),
+            EndDate: z.string(),
+            ProductionYear: z.number().optional(),
+            ImageTags: z.record(z.string()).optional(),
+            ProviderIds: z.record(z.string()).optional(),
+          })
+          .optional(),
       })
       .nullable(),
     PlayState: z.object({

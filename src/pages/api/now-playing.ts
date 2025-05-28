@@ -10,11 +10,8 @@ export const GET: APIRoute = async () => {
     const tmdbService = new TMDBService();
     const session = await embyService.getCurrentSession();
 
-    // Don't return any data if it's live TV or if the content is paused
-    if (
-      session?.NowPlayingItem?.Type === "TvChannel" ||
-      session?.PlayState?.IsPaused
-    ) {
+    // Don't return any data if the content is paused
+    if (session?.PlayState?.IsPaused) {
       return new Response(
         JSON.stringify({
           playing: false,
@@ -25,7 +22,6 @@ export const GET: APIRoute = async () => {
           status: 200,
           headers: {
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
           },
         }
       );
@@ -37,29 +33,70 @@ export const GET: APIRoute = async () => {
         playing: !!session?.NowPlayingItem,
         item: session?.NowPlayingItem
           ? {
-              name: session.NowPlayingItem.Name,
+              name:
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? session.NowPlayingItem.CurrentProgram?.Name ||
+                    session.NowPlayingItem.Name
+                  : session.NowPlayingItem.Name,
               type: session.NowPlayingItem.Type,
-              seriesName: session.NowPlayingItem.SeriesName,
-              seasonName: session.NowPlayingItem.SeasonName,
+              seriesName:
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? undefined
+                  : session.NowPlayingItem.SeriesName,
+              seasonName:
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? undefined
+                  : session.NowPlayingItem.SeasonName,
               episodeTitle:
-                session.NowPlayingItem.EpisodeTitle ||
-                session.NowPlayingItem.Name,
-              productionYear: session.NowPlayingItem.ProductionYear,
-              seasonNumber: session.NowPlayingItem.ParentIndexNumber,
-              episodeNumber: session.NowPlayingItem.IndexNumber,
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? undefined
+                  : session.NowPlayingItem.EpisodeTitle ||
+                    session.NowPlayingItem.Name,
+              productionYear:
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? session.NowPlayingItem.CurrentProgram?.ProductionYear
+                  : session.NowPlayingItem.ProductionYear,
+              seasonNumber:
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? undefined
+                  : session.NowPlayingItem.ParentIndexNumber,
+              episodeNumber:
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? undefined
+                  : session.NowPlayingItem.IndexNumber,
               imageUrl: await tmdbService.getPosterUrl(
-                session.NowPlayingItem.Type === "Episode"
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? session.NowPlayingItem.CurrentProgram?.Name ||
+                      session.NowPlayingItem.Name
+                  : session.NowPlayingItem.Type === "Episode"
                   ? session.NowPlayingItem.SeriesName || ""
                   : session.NowPlayingItem.Name,
-                session.NowPlayingItem.Type,
-                session.NowPlayingItem.ProductionYear
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? "Episode"
+                  : session.NowPlayingItem.Type,
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? session.NowPlayingItem.CurrentProgram?.ProductionYear
+                  : session.NowPlayingItem.ProductionYear,
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? session.NowPlayingItem.CurrentProgram?.Name
+                  : session.NowPlayingItem.EpisodeTitle
               ),
               backdropUrl: await tmdbService.getBackdropUrl(
-                session.NowPlayingItem.Type === "Episode"
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? session.NowPlayingItem.CurrentProgram?.Name ||
+                      session.NowPlayingItem.Name
+                  : session.NowPlayingItem.Type === "Episode"
                   ? session.NowPlayingItem.SeriesName || ""
                   : session.NowPlayingItem.Name,
-                session.NowPlayingItem.Type,
-                session.NowPlayingItem.ProductionYear
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? "Episode"
+                  : session.NowPlayingItem.Type,
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? session.NowPlayingItem.CurrentProgram?.ProductionYear
+                  : session.NowPlayingItem.ProductionYear,
+                session.NowPlayingItem.Type === "TvChannel"
+                  ? session.NowPlayingItem.CurrentProgram?.Name
+                  : session.NowPlayingItem.EpisodeTitle
               ),
             }
           : null,
@@ -69,12 +106,10 @@ export const GET: APIRoute = async () => {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
       }
     );
   } catch (error) {
-    console.error("Error fetching now playing status:", error);
     return new Response(
       JSON.stringify({
         playing: false,
